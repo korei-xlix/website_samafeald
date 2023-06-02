@@ -95,6 +95,7 @@ var ARR_WindowCtrl_Sel = new Object() ;
 // ウィンドウ情報
 function STR_WindowCtrl_WindowInfo_Str()
 {
+	this.PageObj    = "" ;			//ページオブジェクト
 	this.Title  = "none" ;			//タイトル
 	this.Width  = 0 ;				//幅
 	this.Height = 0 ;				//高さ
@@ -103,7 +104,8 @@ function STR_WindowCtrl_WindowInfo_Str()
 function STR_WindowCtrl_UpdateInfo_Str()
 {
 	this.TimeDate = null ;			//現在日時
-	this.DateText = null ;			//日付テキスト
+///	this.DateText = null ;			//日付テキスト
+	this.UpdateDate = null ;		//更新日時（取得）
 	this.Days     = 0 ;				//日付差
 	this.FLG_ON   = false ;			//更新アイコン表示 trur=ON
 }
@@ -117,6 +119,8 @@ function STR_WindowCtrl_CSSdata_Str()
 
 function STR_WindowCtrl_FileData_Str()
 {
+	this.PageObj    = "" ;			//ページオブジェクト
+	this.MaterialDomain = null ;	//外部ドメインのアイコンファイルの場合のドメイン名
 	this.CHR_CurrPath = null ;		//ファイルの相対パス
 	this.CHR_FilePath = "none" ;	//ファイルの絶対パス
 }
@@ -125,6 +129,7 @@ function STR_WindowCtrl_CSSinfo_Str()
 {
 	this.PageObj    = "" ;			//ページオブジェクト
 	this.FilePath   = "" ;			//ページの相対パス+ファイル名
+	this.MaterialDomain = null ;	//外部ドメインのCSSの場合のドメイン名
 	
 	this.FLG_Init    = false ;		//true = 初期化完了
 	this.FLG_PC      = true ;		//ページがPC版か
@@ -150,6 +155,7 @@ var STR_WindowCtrl_Val = new STR_WindowCtrl_CSSinfo_Str() ;
 //#####################################################
 function CLS_WindowCtrl_PageSet({
 	inPageObj,
+	inMaterialDomain = null,
 	inStylePath,
 	inStyleName,
 	inMode       = "normal",
@@ -194,11 +200,12 @@ function CLS_WindowCtrl_PageSet({
 	//# パラメータの作成
 	//#############################
 	wSTR_Param = new STR_WindowCtrl_CSSinfo_Str() ;
-	wSTR_UpdateParam = new STR_WindowCtrl_UpdateInfo_Str() ;
+///	wSTR_UpdateParam = new STR_WindowCtrl_UpdateInfo_Str() ;
 	
 	///////////////////////////////
 	// ページオブジェクト
 	wSTR_Param.PageObj = inPageObj ;
+	wSTR_Param.MaterialDomain = inMaterialDomain ;
 	
 	///////////////////////////////
 	// ページの相対パス
@@ -213,6 +220,13 @@ function CLS_WindowCtrl_PageSet({
 		return wRes ;
 	}
 	wSTR_Param.FilePath = wSubRes['Responce'] ;
+	//#############################
+	//# 相対パス
+	//#############################
+	if( DEF_TEST_LOG==true )
+	{
+		CLS_L({ inRes:wRes, inLevel: "SC", inMessage: "STR_WindowCtrl_Val.FilePath ="+String(wSTR_Param.FilePath) }) ;
+	}
 	
 	///////////////////////////////
 	// 日時の取得
@@ -225,11 +239,20 @@ function CLS_WindowCtrl_PageSet({
 		return wRes ;
 	}
 	wSTR_Param.UpdateInfo.TimeDate = wTimeDate['Responce'] ;
+	//#############################
+	//# 日時
+	//#############################
+	if( DEF_TEST_LOG==true )
+	{
+		CLS_L({ inRes:wRes, inLevel: "SC", inMessage: "STR_WindowCtrl_Val.UpdateInfo ="+String(wSTR_Param.UpdateInfo) }) ;
+	}
 	
 	///////////////////////////////
 	// 画面情報の取得
+	wSTR_Param.WindowInfo.PageObj = wSTR_Param.PageObj ;
 	wSubRes = __WindowCtrl_getWindowInfo({
-		inParam : wSTR_Param
+///		inParam : wSTR_Param
+		outSubParam	: wSTR_Param.WindowInfo
 	}) ;
 	if( wSubRes['Result']!=true )
 	{
@@ -250,13 +273,29 @@ function CLS_WindowCtrl_PageSet({
 	{
 		wSTR_Param.FLG_PC = false ;
 	}
+	//#############################
+	//# 画面モード
+	//#############################
+	if( DEF_TEST_LOG==true )
+	{
+		CLS_L({ inRes:wRes, inLevel: "SC", inMessage: "STR_WindowCtrl_Val.FLG_PC ="+String(wSTR_Param.FLG_PC) }) ;
+	}
 	
 	///////////////////////////////
 	// CSSスイッチ表示
 	wSTR_Param.SW_Mode = wMode ;
+	//#############################
+	//# CSSスイッチ
+	//#############################
+	if( DEF_TEST_LOG==true )
+	{
+		CLS_L({ inRes:wRes, inLevel: "SC", inMessage: "STR_WindowCtrl_Val.SW_Mode ="+String(wSTR_Param.SW_Mode) }) ;
+	}
 	
 	///////////////////////////////
 	// CSSパス
+	wSTR_Param.Com.PageObj = wSTR_Param.PageObj ;
+	wSTR_Param.Org.PageObj = wSTR_Param.PageObj ;
 	if( inStyleCommPath!=null )
 	{
 		wSTR_Param.Com.CHR_StyleCurr = inStyleCommPath ;
@@ -269,7 +308,8 @@ function CLS_WindowCtrl_PageSet({
 	wSTR_Param.Org.CHR_StyleCurr = inStylePath ;
 	wSTR_Param.Org.CHR_StyleName = inStyleName ;
 	wSubRes = __WindowCtrl_getCSS({
-		inParam : wSTR_Param
+///		inParam : wSTR_Param
+		outParam : wSTR_Param
 	}) ;
 	if( wSubRes['Result']!=true )
 	{
@@ -280,11 +320,15 @@ function CLS_WindowCtrl_PageSet({
 	}
 	
 	///////////////////////////////
-	// ページアイコンパス
+	// ページアイコンパス(ファイルパス)
+	wSTR_Param.PageIcon.PageObj = wSTR_Param.PageObj ;
+	wSTR_Param.PageIcon.MaterialDomain = wSTR_Param.MaterialDomain ;
+	wSTR_Param.PageIcon.CHR_CurrPath = inIconPath ;
 	wSubRes = __WindowCtrl_getFilePath({
-		inPageObj	: wSTR_Param.PageObj,
-		inFileObj	: wSTR_Param.PageIcon,
-		inCurrPath	: inIconPath
+///		inPageObj	: wSTR_Param.PageObj,
+///		inFileObj	: wSTR_Param.PageIcon,
+///		inCurrPath	: inIconPath
+		outSubParam	: wSTR_Param.PageIcon
 	}) ;
 	if( wSubRes['Result']!=true )
 	{
@@ -295,11 +339,15 @@ function CLS_WindowCtrl_PageSet({
 	}
 	
 	///////////////////////////////
-	// 更新アイコンパス
+	// 更新アイコンパス(ファイルパス)
+	wSTR_Param.UpIcon.PageObj = wSTR_Param.PageObj ;
+	wSTR_Param.UpIcon.MaterialDomain = wSTR_Param.MaterialDomain ;
+	wSTR_Param.UpIcon.CHR_CurrPath = DEF_GLOBAL_CHR_UP_ICONPATH ;
 	wSubRes = __WindowCtrl_getFilePath({
-		inPageObj	: wSTR_Param.PageObj,
-		inFileObj	: wSTR_Param.UpIcon,
-		inCurrPath	: DEF_GLOBAL_CHR_UP_ICONPATH
+///		inPageObj	: wSTR_Param.PageObj,
+///		inFileObj	: wSTR_Param.UpIcon,
+///		inCurrPath	: DEF_GLOBAL_CHR_UP_ICONPATH
+		outSubParam	: wSTR_Param.UpIcon
 	}) ;
 	if( wSubRes['Result']!=true )
 	{
@@ -309,6 +357,23 @@ function CLS_WindowCtrl_PageSet({
 		return wRes ;
 	}
 	
+	///////////////////////////////
+	// 更新情報の取得
+	wSubRes = __WindowCtrl_getPageUpdate({
+		outParam	: wSTR_Param,
+	}) ;
+	if( wSubRes['Result']!=true )
+	{
+		//失敗
+		wRes['Reason'] = "__WindowCtrl_getPageUpdate is failed" ;
+		CLS_L({ inRes:wRes, inLevel: "B" }) ;
+		return wRes ;
+	}
+	
+///	///////////////////////////////
+///	// 更新アイコン情報の保存
+///	this.STR_WindowCtrl_Val.UpdateInfo = wSTR_UpdateParam ;
+///	
 	///////////////////////////////
 	// パラメータ保存
 	this.STR_WindowCtrl_Val = wSTR_Param ;
@@ -335,7 +400,8 @@ function CLS_WindowCtrl_PageSet({
 	///////////////////////////////
 	// ページアイコン設定
 	wSubRes = CLS_PageObj_setHref({
-		inPageObj	: this.STR_WindowCtrl_Val.PageObj,
+///		inPageObj	: this.STR_WindowCtrl_Val.PageObj,
+		inPageObj	: this.STR_WindowCtrl_Val.PageIcon.PageObj,
 		inKey		: "iIcon",
 		inCode		: this.STR_WindowCtrl_Val.PageIcon.CHR_FilePath
 	}) ;
@@ -345,6 +411,13 @@ function CLS_WindowCtrl_PageSet({
 		wRes['Reason'] = "CLS_PageObj_setHref is failed" ;
 		CLS_L({ inRes:wRes, inLevel: "B" }) ;
 		return wRes ;
+	}
+	//#############################
+	//# ページアイコン
+	//#############################
+	if( DEF_TEST_LOG==true )
+	{
+		CLS_L({ inRes:wRes, inLevel: "SC", inMessage: "set page icon ="+String(this.STR_WindowCtrl_Val.PageIcon.CHR_FilePath) }) ;
 	}
 	
 	///////////////////////////////
@@ -360,10 +433,11 @@ function CLS_WindowCtrl_PageSet({
 	
 	///////////////////////////////
 	// 更新アイコンの設定
-	wSubRes = __WindowCtrl_setPageUpdate({
-		inParam	: wSTR_UpdateParam,
-		inPath	: this.STR_WindowCtrl_Val.UpIcon.CHR_FilePath
-	}) ;
+///	wSubRes = __WindowCtrl_setPageUpdate({
+///		inParam	: wSTR_UpdateParam,
+///		inPath	: this.STR_WindowCtrl_Val.UpIcon.CHR_FilePath
+///	}) ;
+	wSubRes = __WindowCtrl_setPageUpdate() ;
 	if( wSubRes['Result']!=true )
 	{
 		//失敗
@@ -371,11 +445,11 @@ function CLS_WindowCtrl_PageSet({
 		CLS_L({ inRes:wRes, inLevel: "B" }) ;
 		return wRes ;
 	}
-	
-	///////////////////////////////
-	// 更新アイコン情報の保存
-	this.STR_WindowCtrl_Val.UpdateInfo = wSTR_UpdateParam ;
-	
+///	
+///	///////////////////////////////
+///	// 更新アイコン情報の保存
+///	this.STR_WindowCtrl_Val.UpdateInfo = wSTR_UpdateParam ;
+///	
 	///////////////////////////////
 	// セレクター設定
 	wSubRes = CLS_WindowCtrl_setSel() ;
@@ -400,26 +474,33 @@ function CLS_WindowCtrl_PageSet({
 ///////////////////////////////////////////////////////
 // 画面情報の取得
 function __WindowCtrl_getWindowInfo({
-	inParam
+///	inParam
+	outSubParam
 })
 {
 	///////////////////////////////
 	// 応答形式の取得
 	let wRes = CLS_L_getRes({ inClassName : "CLS_WindowCtrl", inFuncName : "__WindowCtrl_getWindowInfo" }) ;
 	
+	let pSubParam ;
+	
+	pSubParam = outSubParam ;
 	try
 	{
 		///////////////////////////////
 		// タイトル
-		inParam.WindowInfo.Title = inParam.PageObj.title ;
+///		inParam.WindowInfo.Title = inParam.PageObj.title ;
+		pSubParam.Title = pSubParam.PageObj.title ;
 		
 		///////////////////////////////
 		// 画面幅
-		inParam.WindowInfo.Width = inParam.PageObj.documentElement.clientWidth ;
+///		inParam.WindowInfo.Width = inParam.PageObj.documentElement.clientWidth ;
+		pSubParam.Width = pSubParam.PageObj.documentElement.clientWidth ;
 		
 		///////////////////////////////
 		// 画面高さ
-		inParam.WindowInfo.Height = inParam.PageObj.documentElement.clientHeight ;
+///		inParam.WindowInfo.Height = inParam.PageObj.documentElement.clientHeight ;
+		pSubParamo.Height = pSubParam.PageObj.documentElement.clientHeight ;
 	}
 	catch(e)
 	{
@@ -428,6 +509,18 @@ function __WindowCtrl_getWindowInfo({
 		wRes['Reason'] = "[Exception]=" + String( e.message ) ;
 		CLS_L({ inRes:wRes, inLevel: "A" }) ;
 		return wRes ;
+	}
+	
+	//#############################
+	//# 画面情報
+	//#############################
+	if( DEF_TEST_LOG==true )
+	{
+		wStr = "STR_WindowCtrl_Val.WindowInfo =" ;
+		wStr = wStr + " :Width ="+String(pSubParam.Width) ;
+		wStr = wStr + " :Height ="+String(pSubParam.Height) ;
+		wStr = wStr + " :Title ="+String(pSubParam.Title) ;
+		CLS_L({ inRes:wRes, inLevel: "SC", inMessage: wStr }) ;
 	}
 	
 	///////////////////////////////
@@ -439,47 +532,203 @@ function __WindowCtrl_getWindowInfo({
 ///////////////////////////////////////////////////////
 // CSSパスの取得
 function __WindowCtrl_getCSS({
-	inParam
+///	inParam
+	outParam
 })
 {
 	///////////////////////////////
 	// 応答形式の取得
 	let wRes = CLS_L_getRes({ inClassName : "CLS_WindowCtrl", inFuncName : "__WindowCtrl_getCSS" }) ;
 	
-	let wPath, wFile, wFLG_SW ;
+///	let wPath, wFile, wFLG_SW ;
+	let wPath ;
+	let pParam ;
 	
+///	///////////////////////////////
+///	// CSSファイルパスの取得(comm)
+///	wSubRes = __WindowCtrl_getCSSfilePath({
+///		inPageObj	: inParam.PageObj,
+///		inSW_Mode	: inParam.SW_Mode,
+///		inFLG_PC	: inParam.FLG_PC,
+///		inStyleObj	: inParam.Com
+///		outParam	: outParam
+///	}) ;
+///	if( wSubRes['Result']!=true )
+///	{
+///		//失敗
+///		wRes['Reason'] = "__WindowCtrl_getCSSfilePath is failed(Com)" ;
+///		CLS_L({ inRes:wRes, inLevel: "B" }) ;
+///		return wRes ;
+///	}
+///	
+///	///////////////////////////////
+///	// CSSファイルパスの取得(original)
+///	wSubRes = __WindowCtrl_getCSSfilePath({
+///		inPageObj	: inParam.PageObj,
+///		inSW_Mode	: inParam.SW_Mode,
+///		inFLG_PC	: inParam.FLG_PC,
+///		inStyleObj	: inParam.Org
+///		outParam	: outParam
+///	}) ;
+///	if( wSubRes['Result']!=true )
+///	{
+///		//失敗
+///		wRes['Reason'] = "__WindowCtrl_getCSSfilePath is failed(Org)" ;
+///		CLS_L({ inRes:wRes, inLevel: "B" }) ;
+///		return wRes ;
+///	}
+	
+	pParam = outParam
 	///////////////////////////////
-	// CSSファイルパスの取得(comm)
-	wSubRes = __WindowCtrl_getCSSfilePath({
-		inPageObj	: inParam.PageObj,
-		inSW_Mode	: inParam.SW_Mode,
-		inFLG_PC	: inParam.FLG_PC,
-		inStyleObj	: inParam.Com
+	// カレントパスの取得
+	if( pParam.MaterialDomain==null )
+	{
+		///////////////////////////////
+		// ローカルドメイン com の場合
+		wSubRes = CLS_Path_getCurrPath({
+			inPageObj	: pParam.PageObj,
+			inPath		: pParam.Com.CHR_StyleCurr
+		}) ;
+		if( wSubRes['Result']!=true )
+		{
+			//失敗
+			wRes['Reason'] = "CLS_Path_getCurrPath is failed(com)" ;
+			CLS_L({ inRes:wRes, inLevel: "B" }) ;
+			return wRes ;
+		}
+		wPath = wSubRes['Responce'] ;
+		
+	}
+	else
+	{
+		///////////////////////////////
+		// リモートドメイン com の場合
+		wSubRes = CLS_Path_getOutDomainPath({
+			inOutDomain	: pParam.MaterialDomain,
+			inPath		: pParam.Com.CHR_StyleCurr
+		}) ;
+		if( wSubRes['Result']!=true )
+		{
+			//失敗
+			wRes['Reason'] = "CLS_Path_getOutDomainPath is failed(com)" ;
+			CLS_L({ inRes:wRes, inLevel: "B" }) ;
+			return wRes ;
+		}
+		wPath = wSubRes['Responce'] ;
+		
+	}
+	wSubRes = __WindowCtrl_getCSSfileName({
+		inSW_Mode = pParam.SW_Mode,
+		inPath =wPath,
+		outSubParam = pParam.Com
 	}) ;
 	if( wSubRes['Result']!=true )
 	{
 		//失敗
-		wRes['Reason'] = "__WindowCtrl_getCSSfilePath is failed(Com)" ;
+		wRes['Reason'] = "__WindowCtrl_getCSSfileName is failed(com)" ;
 		CLS_L({ inRes:wRes, inLevel: "B" }) ;
 		return wRes ;
 	}
 	
-	///////////////////////////////
-	// CSSファイルパスの取得(original)
-	wSubRes = __WindowCtrl_getCSSfilePath({
-		inPageObj	: inParam.PageObj,
-		inSW_Mode	: inParam.SW_Mode,
-		inFLG_PC	: inParam.FLG_PC,
-		inStyleObj	: inParam.Org
+	if( pParam.MaterialDomain==null )
+	{
+		///////////////////////////////
+		// ローカルドメイン org の場合
+		wSubRes = CLS_Path_getCurrPath({
+			inPageObj	: pParam.PageObj,
+			inPath		: pParam.Org.CHR_StyleCurr
+		}) ;
+		if( wSubRes['Result']!=true )
+		{
+			//失敗
+			wRes['Reason'] = "CLS_Path_getCurrPath is failed(org)" ;
+			CLS_L({ inRes:wRes, inLevel: "B" }) ;
+			return wRes ;
+		}
+		wPath = wSubRes['Responce'] ;
+		
+	}
+	else
+	{
+		///////////////////////////////
+		// リモートドメイン com の場合
+		wSubRes = CLS_Path_getOutDomainPath({
+			inOutDomain	: pParam.MaterialDomain,
+			inPath		: pParam.Org.CHR_StyleCurr
+		}) ;
+		if( wSubRes['Result']!=true )
+		{
+			//失敗
+			wRes['Reason'] = "CLS_Path_getOutDomainPath is failed(org)" ;
+			CLS_L({ inRes:wRes, inLevel: "B" }) ;
+			return wRes ;
+		}
+		wPath = wSubRes['Responce'] ;
+		
+	}
+	wSubRes = __WindowCtrl_getCSSfileName({
+		inSW_Mode = pParam.SW_Mode,
+		inPath =wPath,
+		outSubParam = pParam.Org
 	}) ;
 	if( wSubRes['Result']!=true )
 	{
 		//失敗
-		wRes['Reason'] = "__WindowCtrl_getCSSfilePath is failed(Org)" ;
+		wRes['Reason'] = "__WindowCtrl_getCSSfileName is failed(org)" ;
 		CLS_L({ inRes:wRes, inLevel: "B" }) ;
 		return wRes ;
 	}
 	
+///	///////////////////////////////
+///	// ファイル名の設定
+///	if( inSW_Mode=="normal" )
+///	{
+///		if( inFLG_PC==true )
+///		{
+///			//PC版
+///			wFile = inStyleObj.CHR_StyleName + "_wide.css" ;
+///	}
+///		else
+///		{
+///			//Mobile版
+///			wFile = inStyleObj.CHR_StyleName + "_mini.css" ;
+///	}
+///	}
+///	else
+///	{
+///		if(( inSW_Mode=="pconly" )||( inSW_Mode=="pcnone" ))
+///		{
+///			//PC版
+///			wFile = inStyleObj.CHR_StyleName + "_wide.css" ;
+///	}
+///		else
+///		{
+///			//Mobile版
+///			wFile = inStyleObj.CHR_StyleName + "_mini.css" ;
+///	}
+///	}
+///	
+///	///////////////////////////////
+///	// ファイルの絶対パス取得
+///	wPath = wSubRes['Responce'] + wFile ;
+///	
+///	///////////////////////////////
+///	// 妥当性チェック
+///	wSubRes = CLS_Path_checkURL({
+///		inPath : wPath
+///	}) ;
+///	if( wSubRes['Result']!=true )
+///	{
+///		//失敗
+///		wRes['Reason'] = "CLS_Path_checkURL is failed" ;
+///		CLS_L({ inRes:wRes, inLevel: "B" }) ;
+///		return wRes ;
+///	}
+///	
+///	///////////////////////////////
+///	// パラメータに格納する(ポインタ)
+///	inStyleObj.CHR_StylePath = wPath ;
+///	
 	///////////////////////////////
 	// 正常
 	wRes['Result'] = true ;
@@ -487,34 +736,21 @@ function __WindowCtrl_getCSS({
 }
 
 ///////////////////////////////////////////////////////
-// CSSファイルパスの取得
-function __WindowCtrl_getCSSfilePath({
-	inPageObj,
-	inSW_Mode,
-	inFLG_PC,
-	inStyleObj
+// CSSファイル名の取得
+function __WindowCtrl_getCSSfileName({
+///	inSW_Mode,
+///	inPath,
+	outSubParam
 })
 {
 	///////////////////////////////
 	// 応答形式の取得
-	let wRes = CLS_L_getRes({ inClassName : "CLS_WindowCtrl", inFuncName : "__WindowCtrl_getCSSfilePath" }) ;
+	let wRes = CLS_L_getRes({ inClassName : "CLS_WindowCtrl", inFuncName : "__WindowCtrl_getCSSfileName" }) ;
 	
-	let wPath, wFile ;
+	let wPath ;
+	let pSubParam ;
 	
-	///////////////////////////////
-	// カレントパスの取得(comm)
-	wSubRes = CLS_Path_getCurrPath({
-		inPageObj	: inPageObj,
-		inPath		: inStyleObj.CHR_StyleCurr
-	}) ;
-	if( wSubRes['Result']!=true )
-	{
-		//失敗
-		wRes['Reason'] = "CLS_Path_getCurrPath is failed" ;
-		CLS_L({ inRes:wRes, inLevel: "B" }) ;
-		return wRes ;
-	}
-	
+	pSubParam = outSubParam ;
 	///////////////////////////////
 	// ファイル名の設定
 	if( inSW_Mode=="normal" )
@@ -522,12 +758,12 @@ function __WindowCtrl_getCSSfilePath({
 		if( inFLG_PC==true )
 		{
 			//PC版
-			wFile = inStyleObj.CHR_StyleName + "_wide.css" ;
+			wPath = pSubParam.CHR_StyleName + "_wide.css" ;
 		}
 		else
 		{
 			//Mobile版
-			wFile = inStyleObj.CHR_StyleName + "_mini.css" ;
+			wPath = pSubParam.CHR_StyleName + "_mini.css" ;
 		}
 	}
 	else
@@ -535,18 +771,14 @@ function __WindowCtrl_getCSSfilePath({
 		if(( inSW_Mode=="pconly" )||( inSW_Mode=="pcnone" ))
 		{
 			//PC版
-			wFile = inStyleObj.CHR_StyleName + "_wide.css" ;
+			wPath = pSubParam.CHR_StyleName + "_wide.css" ;
 		}
 		else
 		{
 			//Mobile版
-			wFile = inStyleObj.CHR_StyleName + "_mini.css" ;
+			wPath = pSubParam.CHR_StyleName + "_mini.css" ;
 		}
 	}
-	
-	///////////////////////////////
-	// ファイルの絶対パス取得
-	wPath = wSubRes['Responce'] + wFile ;
 	
 	///////////////////////////////
 	// 妥当性チェック
@@ -563,13 +795,111 @@ function __WindowCtrl_getCSSfilePath({
 	
 	///////////////////////////////
 	// パラメータに格納する(ポインタ)
-	inStyleObj.CHR_StylePath = wPath ;
+	pSubParam.CHR_StylePath = wPath ;
+	//#############################
+	//# CSSパス
+	//#############################
+	if( DEF_TEST_LOG==true )
+	{
+		wStr = "STR_WindowCtrl_Val.CSSdata ="+String(pSubParam.CHR_StyleName) ;
+		wStr = wStr + " :CHR_StylePath ="+String(pSubParam.CHR_StylePath) ;
+		CLS_L({ inRes:wRes, inLevel: "SC", inMessage: wStr }) ;
+	}
 	
 	///////////////////////////////
 	// 正常
 	wRes['Result'] = true ;
 	return wRes ;
 }
+
+///////////////////////////////////////////////////////
+// CSSファイルパスの取得
+///function __WindowCtrl_getCSSfilePath({
+///	inPageObj,
+///	inSW_Mode,
+///	inFLG_PC,
+///	inStyleObj
+///	outParam
+///})
+///{
+///	///////////////////////////////
+///	// 応答形式の取得
+///	let wRes = CLS_L_getRes({ inClassName : "CLS_WindowCtrl", inFuncName : "__WindowCtrl_getCSSfilePath" }) ;
+///	
+///	let wPath, wFile ;
+///	let pParam ;
+///	
+///	pParam = outParam
+///	///////////////////////////////
+///	// カレントパスの取得
+///	//ローカルドメインの場合
+///	wSubRes = CLS_Path_getCurrPath({
+///		inPageObj	: pParam.PageObj,
+///		inPath		: inStyleObj.CHR_StyleCurr
+///	}) ;
+///	if( wSubRes['Result']!=true )
+///	{
+///		//失敗
+///		wRes['Reason'] = "CLS_Path_getCurrPath is failed" ;
+///		CLS_L({ inRes:wRes, inLevel: "B" }) ;
+///		return wRes ;
+///	}
+///	
+///	///////////////////////////////
+///	// ファイル名の設定
+///	if( inSW_Mode=="normal" )
+///	{
+///		if( inFLG_PC==true )
+///		{
+///			//PC版
+///			wFile = inStyleObj.CHR_StyleName + "_wide.css" ;
+///	}
+///		else
+///		{
+///			//Mobile版
+///			wFile = inStyleObj.CHR_StyleName + "_mini.css" ;
+///	}
+///	}
+///	else
+///	{
+///		if(( inSW_Mode=="pconly" )||( inSW_Mode=="pcnone" ))
+///		{
+///			//PC版
+///			wFile = inStyleObj.CHR_StyleName + "_wide.css" ;
+///	}
+///		else
+////		{
+///			//Mobile版
+////			wFile = inStyleObj.CHR_StyleName + "_mini.css" ;
+///	}
+///	}
+///	
+///	///////////////////////////////
+///	// ファイルの絶対パス取得
+///	wPath = wSubRes['Responce'] + wFile ;
+///	
+////	///////////////////////////////
+///	// 妥当性チェック
+///	wSubRes = CLS_Path_checkURL({
+///		inPath : wPath
+///	}) ;
+///	if( wSubRes['Result']!=true )
+///	{
+///		//失敗
+///		wRes['Reason'] = "CLS_Path_checkURL is failed" ;
+///		CLS_L({ inRes:wRes, inLevel: "B" }) ;
+///		return wRes ;
+///	}
+///	
+///	///////////////////////////////
+///	// パラメータに格納する(ポインタ)
+///	inStyleObj.CHR_StylePath = wPath ;
+///	
+///	///////////////////////////////
+///	// 正常
+///	wRes['Result'] = true ;
+///	return wRes ;
+///}
 
 ///////////////////////////////////////////////////////
 // CSSファイルの設定
@@ -597,6 +927,10 @@ function __WindowCtrl_setCSSfile({
 		CLS_L({ inRes:wRes, inLevel: "B" }) ;
 		return wRes ;
 	}
+	if( DEF_TEST_LOG==true )
+	{
+		CLS_L({ inRes:wRes, inLevel: "SC", inMessage: "set css Com ="+String(inComPath) }) ;
+	}
 	
 	///////////////////////////////
 	// CSS設定(origin)
@@ -612,6 +946,10 @@ function __WindowCtrl_setCSSfile({
 		CLS_L({ inRes:wRes, inLevel: "B" }) ;
 		return wRes ;
 	}
+	if( DEF_TEST_LOG==true )
+	{
+		CLS_L({ inRes:wRes, inLevel: "SC", inMessage: "set css Org ="+String(inOrgPath) }) ;
+	}
 	
 	///////////////////////////////
 	// 正常
@@ -622,9 +960,10 @@ function __WindowCtrl_setCSSfile({
 ///////////////////////////////////////////////////////
 // ファイルパスの取得
 function __WindowCtrl_getFilePath({
-	inPageObj,
-	inFileObj,
-	inCurrPath
+///	inPageObj,
+///	inFileObj,
+///	inCurrPath
+	outSubParam
 })
 {
 	///////////////////////////////
@@ -632,22 +971,61 @@ function __WindowCtrl_getFilePath({
 	let wRes = CLS_L_getRes({ inClassName : "CLS_WindowCtrl", inFuncName : "__WindowCtrl_setCSSfile" }) ;
 	
 	let wPath ;
+	let pSubParam ;
 	
+	pSubParam = outSubParam ;
+///	///////////////////////////////
+///	// カレントパスの取得
+///	wSubRes = CLS_Path_getCurrPath({
+///		inPageObj	: inPageObj,
+///		inPath		: inCurrPath
+///	}) ;
+///	if( wSubRes['Result']!=true )
+///	{
+///		//失敗
+///		wRes['Reason'] = "CLS_Path_getCurrPath is failed" ;
+///		CLS_L({ inRes:wRes, inLevel: "B" }) ;
+///		return wRes ;
+///	}
+///	wPath = wSubRes['Responce'] ;
 	///////////////////////////////
 	// カレントパスの取得
-	wSubRes = CLS_Path_getCurrPath({
-		inPageObj	: inPageObj,
-		inPath		: inCurrPath
-	}) ;
-	if( wSubRes['Result']!=true )
+	if( pParam.MaterialDomain==null )
 	{
-		//失敗
-		wRes['Reason'] = "CLS_Path_getCurrPath is failed" ;
-		CLS_L({ inRes:wRes, inLevel: "B" }) ;
-		return wRes ;
+		///////////////////////////////
+		// ローカルドメインの場合
+		wSubRes = CLS_Path_getCurrPath({
+			inPageObj	: pParam.PageObj,
+			inPath		: pParam.CHR_CurrPath
+		}) ;
+		if( wSubRes['Result']!=true )
+		{
+			//失敗
+			wRes['Reason'] = "CLS_Path_getCurrPath is failed" ;
+			CLS_L({ inRes:wRes, inLevel: "B" }) ;
+			return wRes ;
+		}
+		wPath = wSubRes['Responce'] ;
+		
 	}
-	wPath = wSubRes['Responce'] ;
-	
+	else
+	{
+		///////////////////////////////
+		// リモートドメインの場合
+		wSubRes = CLS_Path_getOutDomainPath({
+			inOutDomain	: pParam.MaterialDomain,
+			inPath		: pParam.CHR_CurrPath
+		}) ;
+		if( wSubRes['Result']!=true )
+		{
+			//失敗
+			wRes['Reason'] = "CLS_Path_getOutDomainPath is failed" ;
+			CLS_L({ inRes:wRes, inLevel: "B" }) ;
+			return wRes ;
+		}
+		wPath = wSubRes['Responce'] ;
+		
+	}
 	///////////////////////////////
 	// 妥当性チェック
 	wSubRes = CLS_Path_checkURL({
@@ -663,8 +1041,18 @@ function __WindowCtrl_getFilePath({
 	
 	///////////////////////////////
 	// パラメータに格納する(ポインタ)
-	inFileObj.CHR_CurrPath = inCurrPath ;
-	inFileObj.CHR_FilePath = wPath ;
+///	inFileObj.CHR_CurrPath = inCurrPath ;
+///	inFileObj.CHR_FilePath = wPath ;
+	pParam.CHR_FilePath = wPath ;
+	//#############################
+	//# ファイルパス
+	//#############################
+	if( DEF_TEST_LOG==true )
+	{
+		wStr = "STR_WindowCtrl_Val.Filedata ="+String(pSubParam.CHR_CurrPath) ;
+		wStr = wStr + " :CHR_FilePath ="+String(pSubParam.CHR_FilePath) ;
+		CLS_L({ inRes:wRes, inLevel: "SC", inMessage: wStr }) ;
+	}
 	
 	///////////////////////////////
 	// 正常
@@ -710,6 +1098,11 @@ function __WindowCtrl_setPageTitle()
 		{
 			CLS_L({ inRes:wRes, inLevel: "SR", inMessage: "iTitleDw is not exist" }) ;
 		}
+	}
+	
+	if( DEF_TEST_LOG==true )
+	{
+		CLS_L({ inRes:wRes, inLevel: "SC", inMessage: "set title ="+String(this.STR_WindowCtrl_Val.WindowInfo.Title) }) ;
 	}
 	
 	///////////////////////////////
@@ -781,6 +1174,14 @@ function __WindowCtrl_setCSSsw()
 	
 	}
 	
+	//#############################
+	//# CSS切替SW表示
+	//#############################
+	if( DEF_TEST_LOG==true )
+	{
+		CLS_L({ inRes:wRes, inLevel: "SC", inMessage: "set css sw ="+String(this.STR_WindowCtrl_Val.SW_Mode) }) ;
+	}
+	
 	///////////////////////////////
 	// 正常
 	wRes['Result'] = true ;
@@ -788,31 +1189,28 @@ function __WindowCtrl_setCSSsw()
 }
 
 ///////////////////////////////////////////////////////
-// ページの更新アイコンの設定
-function __WindowCtrl_setPageUpdate({
-	inParam,
-	inPath = null
+// ページの更新アイコン情報の取得
+function __WindowCtrl_getPageUpdate({
+	outParam
 })
 {
 	///////////////////////////////
 	// 応答形式の取得
-	let wRes = CLS_L_getRes({ inClassName : "CLS_WindowCtrl", inFuncName : "__WindowCtrl_setPageUpdate" }) ;
+	let wRes = CLS_L_getRes({ inClassName : "CLS_WindowCtrl", inFuncName : "__WindowCtrl_getPageUpdate" }) ;
 	
 	let wNowDate, wGetDate, wSrcDate ;
+	let pParam ;
 	
+	pParam = outParam ;
 	///////////////////////////////
 	// 日付文字の取得
 	wSubRes_Dst = CLS_PageObj_getInner({
-		inPageObj	: this.STR_WindowCtrl_Val.PageObj,
+		inPageObj	: pParam.UpIcon.PageObj,
 		inKey		: DEF_GLOBAL_IND_UPDATE_DATE,
 		inError		: false
 	}) ;
 	if( wSubRes_Dst['Result']!=true )
 	{
-///		if( DEF_TEST_LOG==true )
-///		{
-///			CLS_L({ inRes:wRes, inLevel: "SR", inMessage: DEF_GLOBAL_IND_UPDATE_DATE + " is not exist" }) ;
-///		}
 		CLS_L({ inRes:wRes, inLevel: "SR", inMessage: DEF_GLOBAL_IND_UPDATE_DATE + " is not exist" }) ;
 		wRes['Result'] = true ;
 		return wRes ;
@@ -842,12 +1240,14 @@ function __WindowCtrl_setPageUpdate({
 		CLS_L({ inRes:wRes, inLevel: "A" }) ;
 		return wRes ;
 	}
+	pParam.UpdateInfo.UpdateDate = wGetDate ;
 	
 	/////////////////////////////
 	// 日数差を求める
 	
 	////今日を日付化する
-	wNowDate = this.STR_WindowCtrl_Val.UpdateInfo.TimeDate ;
+///	wNowDate = this.STR_WindowCtrl_Val.UpdateInfo.TimeDate ;
+	wNowDate = pParam.UpdateInfo.TimeDate ;
 	wNowDate = wNowDate.split(" ") ;
 	wNowDate = wNowDate[0] ;
 	wNowDate = CLS_Time_extDateArray({
@@ -890,18 +1290,156 @@ function __WindowCtrl_setPageUpdate({
 	wSrcDate = new Date( wSrcDate[0], wSrcDate[1], wSrcDate[2] ) ;
 	
 	////日数差
-	this.STR_WindowCtrl_Val.UpdateInfo.Days = ( wNowDate - wSrcDate ) / 86400000 ;
+///	this.STR_WindowCtrl_Val.UpdateInfo.Days = ( wNowDate - wSrcDate ) / 86400000 ;
+	pParam.UpdateInfo.Days = ( wNowDate - wSrcDate ) / 86400000 ;
 	
 	////更新アイコン
-	if( DEF_GLOBAL_UPDATE_PAST>=this.STR_WindowCtrl_Val.UpdateInfo.Days )
+///	if( DEF_GLOBAL_UPDATE_PAST>=this.STR_WindowCtrl_Val.UpdateInfo.Days )
+	if( DEF_GLOBAL_UPDATE_PAST>=pParam.UpdateInfo.Days )
 	{
-		this.STR_WindowCtrl_Val.UpdateInfo.FLG_ON = true ;
+///		this.STR_WindowCtrl_Val.UpdateInfo.FLG_ON = true ;
+		pParam.UpdateInfo.FLG_ON = true ;
 	}
 	else
 	{
-		this.STR_WindowCtrl_Val.UpdateInfo.FLG_ON = false ;
+///		this.STR_WindowCtrl_Val.UpdateInfo.FLG_ON = false ;
+		pParam.UpdateInfo.FLG_ON = false ;
 	}
 	
+	//#############################
+	//# 更新日時
+	//#############################
+	if( DEF_TEST_LOG==true )
+	{
+		wStr = "STR_WindowCtrl_Val.UpdateInfo =" ;
+		wStr = wStr + " :UpdateDate ="+String(pParam.UpdateInfo.UpdateDate) ;
+		wStr = wStr + " :Days ="+String(pParam.UpdateInfo.Days) ;
+		wStr = wStr + " :FLG_ON ="+String(pParam.UpdateInfo.FLG_ON) ;
+		CLS_L({ inRes:wRes, inLevel: "SC", inMessage: wStr }) ;
+	}
+	
+	///////////////////////////////
+	// 正常
+	wRes['Result'] = true ;
+	return wRes ;
+}
+
+///////////////////////////////////////////////////////
+// ページの更新アイコンの設定
+///function __WindowCtrl_setPageUpdate({
+///	inParam,
+///	inPath = null
+///})
+function __WindowCtrl_setPageUpdate()
+{
+	///////////////////////////////
+	// 応答形式の取得
+	let wRes = CLS_L_getRes({ inClassName : "CLS_WindowCtrl", inFuncName : "__WindowCtrl_setPageUpdate" }) ;
+	
+///	let wNowDate, wGetDate, wSrcDate ;
+///	
+///	///////////////////////////////
+///	// 日付文字の取得
+///	wSubRes_Dst = CLS_PageObj_getInner({
+///		inPageObj	: this.STR_WindowCtrl_Val.PageObj,
+///		inKey		: DEF_GLOBAL_IND_UPDATE_DATE,
+///		inError		: false
+///	}) ;
+///	if( wSubRes_Dst['Result']!=true )
+///	{
+///		if( DEF_TEST_LOG==true )
+///		{
+///			CLS_L({ inRes:wRes, inLevel: "SR", inMessage: DEF_GLOBAL_IND_UPDATE_DATE + " is not exist" }) ;
+///		}
+///		CLS_L({ inRes:wRes, inLevel: "SR", inMessage: DEF_GLOBAL_IND_UPDATE_DATE + " is not exist" }) ;
+///		wRes['Result'] = true ;
+///		return wRes ;
+///	}
+///	wGetDate = wSubRes_Dst['Responce'] ;
+///	
+///	/////////////////////////////
+///	// 日付文字の取り出し
+///	try
+///	{
+///		wGetDate = wGetDate.split( "LAST UPDATE：\t" ) ;
+///		if( wGetDate.length!=2 )
+///		{
+///			wRes['Reason'] = "Exception: data change is failer(1)"
+///			CLS_L({ inRes:wRes, inLevel: "A" }) ;
+///			return wRes ;
+///	}
+///		wGetDate = wGetDate[1] ;
+///		wGetDate = wGetDate.trim() ;
+///		
+///	}
+///	catch(e)
+///	{
+///		///////////////////////////////
+///		// 例外処理
+///		wRes['Reason'] = "[Exception]=" + String( e.message ) ;
+///		CLS_L({ inRes:wRes, inLevel: "A" }) ;
+///		return wRes ;
+///	}
+///	
+///	/////////////////////////////
+///	// 日数差を求める
+///	
+///	////今日を日付化する
+///	wNowDate = this.STR_WindowCtrl_Val.UpdateInfo.TimeDate ;
+///	wNowDate = wNowDate.split(" ") ;
+///	wNowDate = wNowDate[0] ;
+///	wNowDate = CLS_Time_extDateArray({
+///		inTimeDate : wNowDate
+///	}) ;
+///	if( wNowDate['Result']!=true )
+///	{
+///		wRes['Reason'] = "Update string invalid(now date)" ;
+///		CLS_L({ inRes:wSubRes_Dst, inLevel: "A" }) ;
+///		return wRes ;
+///	}
+///	wNowDate = wNowDate['Responce']
+///	
+///	if( wNowDate.length!=3 )
+///	{
+///		wRes['Reason'] = "Data length is invalid(now date)" ;
+///		CLS_L({ inRes:wSubRes_Dst, inLevel: "A" }) ;
+///		return wRes ;
+///	}
+///	wNowDate = new Date( wNowDate[0], wNowDate[1], wNowDate[2] ) ;
+///	
+///	////ページの日付を日付化する
+///	wSrcDate = CLS_Time_extDateArray({
+///		inTimeDate : wGetDate
+///	}) ;
+///	if( wSrcDate['Result']!=true )
+///	{
+///		wRes['Reason'] = "Update string invalid(page date)" ;
+///		CLS_L({ inRes:wSubRes_Dst, inLevel: "A" }) ;
+///		return wRes ;
+///	}
+///	wSrcDate = wSrcDate['Responce']
+///	
+///	if( wSrcDate.length!=3 )
+///	{
+///		wRes['Reason'] = "Data length is invalid(page date)" ;
+///		CLS_L({ inRes:wSubRes_Dst, inLevel: "A" }) ;
+///		return wRes ;
+///	}
+///	wSrcDate = new Date( wSrcDate[0], wSrcDate[1], wSrcDate[2] ) ;
+///	
+///	////日数差
+///	this.STR_WindowCtrl_Val.UpdateInfo.Days = ( wNowDate - wSrcDate ) / 86400000 ;
+///	
+///	////更新アイコン
+///	if( DEF_GLOBAL_UPDATE_PAST>=this.STR_WindowCtrl_Val.UpdateInfo.Days )
+///	{
+///		this.STR_WindowCtrl_Val.UpdateInfo.FLG_ON = true ;
+///	}
+///	else
+///	{
+///		this.STR_WindowCtrl_Val.UpdateInfo.FLG_ON = false ;
+///	}
+///	
 	/////////////////////////////
 	// アイコン表示設定
 	wSubRes_Dst = CLS_PageObj_setDisplay({
@@ -922,7 +1460,8 @@ function __WindowCtrl_setPageUpdate({
 	if( this.STR_WindowCtrl_Val.UpdateInfo.FLG_ON==true )
 	{
 		wSubRes_Dst = CLS_PageObj_setSrc({
-			inPageObj	: this.STR_WindowCtrl_Val.PageObj,
+///			inPageObj	: this.STR_WindowCtrl_Val.PageObj,
+			inPageObj	: this.STR_WindowCtrl_Val.UpIcon.PageObj,
 			inKey		: DEF_GLOBAL_IND_UPDATE_ICON,
 			inCode		: this.STR_WindowCtrl_Val.UpIcon.CHR_FilePath
 			}) ;
@@ -935,9 +1474,14 @@ function __WindowCtrl_setPageUpdate({
 		}
 	}
 	
+	//#############################
+	//# 更新アイコン設定
+	//#############################
 	if( DEF_TEST_LOG==true )
 	{
-		CLS_L({ inRes:wRes, inLevel: "SR", inMessage: "set update ison FLG_ON="+String(this.STR_WindowCtrl_Val.UpdateInfo.FLG_ON)  }) ;
+		wStr = "set upicon path="+String(this.STR_WindowCtrl_Val.UpIcon.CHR_FilePath) ;
+		wStr = wStr + " on/off ="+String(this.STR_WindowCtrl_Val.UpdateInfo.FLG_ON) ;
+		CLS_L({ inRes:wRes, inLevel: "SC", inMessage: wStr }) ;
 	}
 	
 	///////////////////////////////
@@ -1006,6 +1550,7 @@ function CLS_WindowCtrl_setSel()
 	let wRes = CLS_L_getRes({ inClassName : "CLS_WindowCtrl", inFuncName : "CLS_WindowCtrl_setSel" }) ;
 	
 	let wARR_Keys, wKey, wI_Key, wText ;
+	let wSelNum ;
 	
 	///////////////////////////////
 	// セットなしは無処理
@@ -1019,6 +1564,7 @@ function CLS_WindowCtrl_setSel()
 	
 	///////////////////////////////
 	// タイトルの取り込み
+	wSelNum = 0 ;
 	for( wI_Key in this.ARR_WindowCtrl_Sel )
 	{
 		///////////////////////////////
@@ -1052,6 +1598,16 @@ function CLS_WindowCtrl_setSel()
 			CLS_L({ inRes:wRes, inLevel: "B" }) ;
 			return wRes ;
 		}
+		wSelNum += 1 ;
+	}
+	
+	//#############################
+	//# セレクタ設定個数
+	//#############################
+	if( DEF_TEST_LOG==true )
+	{
+		wStr = "set selector num ="+String(wSelNum) ;
+		CLS_L({ inRes:wRes, inLevel: "SC", inMessage: wStr }) ;
 	}
 	
 	///////////////////////////////
