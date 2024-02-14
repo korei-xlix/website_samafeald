@@ -1,27 +1,28 @@
-# Samafeald's Home Page　～ホームページ～  
+# samafeald's profile～  
   
 **★このリポジトリの改造、流用、配布、クローンは禁止です★**  
 **　　Modification, appropriation, distribution, and cloning of this repository are prohibited.**  
   
 
 <h1 id="aHowto">このリポジトリについて</h1>  
-このリポジトリは、Samafeald ホームページのソースをを公開するためのものです。  
+このリポジトリは、samafealdのプロフィールページのソースをを公開するためのものです。  
  
 
 
 
-<h1 id="aRules">リポジトリの利用規約 / Repository terms</h1>  
+
+
+<h1 id="aRules">リポジトリの利用規約（共通） / Repository terms of use</h1>  
 
 本項目では、githubの各リポジトリの共通的な利用規約について定めます。  
-
 
 * 本規約は、リポジトリ上の文章、数値などのデータ、ソースコード、  
   ユーザアカウント情報、コメント、リンク先の情報など情報全てに適用されます。  
 
 * 本リポジトリはフリーウェア規約に準拠します。
 
-* **当リポジトリのソースコードの改造、改造物の配布は自由に行えます。**  
-  **ただし、リポジトリのクローンは【禁止〗とします**。  
+* **当リポジトリのソースコードの改造、改造物の配布、クローンは禁止とします。**  
+  **ただし、フリーウェア規格には準拠するため、"非公式に配布、クローンは認め"ます。**  
 
 * リポジトリのソースコード使用の許諾、謝辞については不要です。  
 
@@ -57,15 +58,11 @@
 
 
 
-***
-::Deverop= Samafeald (@samafeald)  
-::Twitter= https://twitter.com/samafeald  
-  
 
 ***
 [[トップへ戻る]](/readme.md)  
   
 ::Admin= Korei (@korei-xlix)  
-::github= https://github.com/korei-xlix/  
-::Web= https://website.koreis-labo.com/  
-::Twitter= https://twitter.com/korei_xlix  
+::github= [https://github.com/korei-xlix/](https://github.com/korei-xlix/)  
+::Web= [https://website.koreis-labo.com/](https://website.koreis-labo.com/)  
+::X= [https://twitter.com/korei_xlix](https://twitter.com/korei_xlix)  
